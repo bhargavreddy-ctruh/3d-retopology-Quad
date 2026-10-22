@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quad-Dominant Remesher Studio | Structured Quad Remeshing</title>
+  <meta name="description" content="Production-ready structured quad-dominant remeshing studio based on EG2010 and KISS architecture. Real-time dual 3D viewports and topological analysis.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Bar -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-badge">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor"/>
+            <polygon points="14,14 21,14 17.5,21" stroke="currentColor" fill="none"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Quad-Dominant Studio</h1>
+          <span class="subtitle">EG2010 Field-Aligned Remeshing Architecture</span>
+        </div>
+      </div>
+      
+      <div class="header-status">
+        <span class="badge badge-pulse">94–98% Quad Target</span>
+        <span class="badge badge-tech">KISS Pipeline</span>
+        <button id="btn-sync-cam" class="btn btn-secondary btn-sm active" title="Toggle Synchronized Orbit Cameras">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          Sync Viewports
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="main-workspace">
+      <!-- Left Sidebar: Controls & Configuration -->
+      <aside class="control-panel">
+        <div class="panel-section">
+          <h2 class="section-title">1. Input Model</h2>
+          
+          <div class="form-group">
+            <label for="sample-select">Preset Sample Models</label>
+            <select id="sample-select" class="form-control">
+              <option value="">-- Choose Sample Model --</option>
+            </select>
+          </div>
+
+          <div class="drop-zone" id="drop-zone">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p>Drag & drop <strong>.OBJ</strong>, <strong>.GLB</strong>, or click to upload</p>
+            <input type="file" id="file-input" accept=".obj,.glb,.gltf,.ply" hidden>
+            <span id="selected-file-label" class="file-name-tag"></span>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-header-row">
+            <h2 class="section-title">2. Production Remeshing Engine</h2>
+            <span class="badge badge-tech" id="mode-badge">⚡ Feature & Curve Locked</span>
+          </div>
+
+          <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+              <span style="font-size: 18px;">🚀</span>
+              <strong style="color: #fff; font-size: 14px;">Tripo 3D Production SOTA</strong>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+              Feature-Aware Structured Quad-Dominant • Planar Facet Invariance • Continuous 3D Edge Locking
+            </div>
+          </div>
+          <input type="hidden" id="input-mode" value="auto">
+          <input type="hidden" id="engine-select" value="tripo_production">
+
+          <div class="form-group">
+            <label for="category-profile">Category Profile</label>
+            <select id="category-profile" class="form-control">
+              <option value="organic" selected>Organic (creatures, plants)</option>
+              <option value="utensil">Utensil (tools, dishware)</option>
+              <option value="hard_surface">Hard Surface (mechanical, furniture)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="target-faces">Target Face Budget</label>
+              <span id="val-target-faces" class="val-pill">5,650</span>
+            </div>
+            <input type="range" id="target-faces" min="500" max="25000" step="250" value="5650" class="range-slider">
+          </div>
+
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="crease-angle">Dihedral Crease Threshold</label>
+              <span id="val-crease-angle" class="val-pill">30°</span>
+            </div>
+            <input type="range" id="crease-angle" min="15" max="60" step="5" value="30" class="range-slider">
+          </div>
+
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="sizing-ratio" title="h_max/h_min for the adaptive sizing field. Higher = bigger gap between small detail quads and large flat quads. Too low and small features (e.g. a decorative knob) can't be resolved as more than a sliver.">Sizing Ratio (detail vs. flat contrast)</label>
+              <span id="val-sizing-ratio" class="val-pill">30</span>
+            </div>
+            <input type="range" id="sizing-ratio" min="2" max="150" step="1" value="30" class="range-slider">
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label" for="defeature-toggle">
+              <input type="checkbox" id="defeature-toggle" checked>
+              Defeature sub-resolution noise (keeps features too small for even the finest sizing tier from forcing a hard crease)
+            </label>
+          </div>
+
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="min-sj">Degenerate Quad Cutoff (Min SJ)</label>
+              <span id="val-min-sj" class="val-pill">0.05</span>
+            </div>
+            <input type="range" id="min-sj" min="0.01" max="0.30" step="0.01" value="0.05" class="range-slider">
+          </div>
+
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="smooth-iters">Tangent Relaxation Passes</label>
+              <span id="val-smooth-iters" class="val-pill">6 iters</span>
+            </div>
+            <input type="range" id="smooth-iters" min="0" max="15" step="1" value="6" class="range-slider">
+          </div>
+
+        </div>
+
+        <button id="btn-run" class="btn btn-primary btn-block">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Run Structured Remesher
+        </button>
+
+        <!-- Download Actions -->
+        <div id="export-section" class="panel-section export-section hidden">
+          <h2 class="section-title">3. Export Result</h2>
+          <div class="btn-group">
+            <button id="btn-download-obj" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Download .OBJ
+            </button>
+            <button id="btn-download-glb" class="btn btn-primary" style="background: linear-gradient(135deg, #4f46e5, #06b6d4);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Download .GLB
+            </button>
+            <button id="btn-download-json" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              Benchmark JSON
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center: Dual 3D Viewport Area -->
+      <section class="viewport-area">
+        <!-- Viewport Toolbar -->
+        <div class="viewport-toolbar">
+          <div class="toolbar-group">
+            <span class="toolbar-label">Shading:</span>
+            <button class="tool-btn active" data-shading="clay">Clay Studio</button>
+            <button class="tool-btn" data-shading="facetype">Face Classifier (Quad vs Tri)</button>
+            <button class="tool-btn" data-shading="jacobian">Scaled Jacobian Map</button>
+            <button class="tool-btn" data-shading="valence">Valence / Singularities</button>
+          </div>
+
+          <div class="toolbar-group">
+            <button id="btn-wireframe" class="tool-btn active" title="Toggle Wireframe">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                <polyline points="2 17 12 22 22 17"/>
+                <polyline points="2 12 12 17 22 12"/>
+              </svg>
+              Wireframe
+            </button>
+            <button id="btn-reset-cam" class="tool-btn" title="Reset Camera View">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 14 14"/>
+              </svg>
+              Reset View
+            </button>
+          </div>
+        </div>
+
+        <!-- 3D Canvas Container (Split Dual View) -->
+        <div class="viewports-split">
+          <!-- Viewport 1: Input Mesh -->
+          <div class="viewport-pane" id="pane-input">
+            <div class="pane-header">
+              <span class="pane-badge">Input Mesh (Original)</span>
+              <span id="badge-in-count" class="pane-meta">—</span>
+            </div>
+            <div class="canvas-wrapper" id="canvas-wrapper-in"></div>
+            <div id="loader-in" class="viewport-loader hidden">
+              <div class="spinner"></div>
+              <span>Processing original...</span>
+            </div>
+          </div>
+
+          <!-- Viewport 2: Remeshed Output Mesh -->
+          <div class="viewport-pane" id="pane-output">
+            <div class="pane-header">
+              <span class="pane-badge badge-primary">Output Mesh (Structured Quad-Dominant)</span>
+              <span id="badge-out-count" class="pane-meta">—</span>
+            </div>
+            <div class="canvas-wrapper" id="canvas-wrapper-out"></div>
+            <div id="loader-out" class="viewport-loader hidden">
+              <div class="spinner"></div>
+              <span id="loader-text">Running EG2010 Polish Pipeline...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom KPI Metric Cards (Gating Criteria Verification) -->
+        <div class="kpi-panel">
+          <div class="kpi-card" id="kpi-quad-ratio">
+            <div class="kpi-label">Quad Ratio</div>
+            <div class="kpi-val" id="kpi-val-quad">—</div>
+            <div class="kpi-benchmark">Target: 95.0% – 99.0%</div>
+            <div class="kpi-status badge-wait" id="status-quad">Pending</div>
+          </div>
+
+          <div class="kpi-card" id="kpi-watertight">
+            <div class="kpi-label">Mesh Contiguity</div>
+            <div class="kpi-val" id="kpi-val-watertight">—</div>
+            <div class="kpi-benchmark">Watertight / 0 Seam Tears</div>
+            <div class="kpi-status badge-wait" id="status-watertight">Pending</div>
+          </div>
+
+          <div class="kpi-card" id="kpi-mean-sj">
+            <div class="kpi-label">Mean Scaled Jacobian</div>
+            <div class="kpi-val" id="kpi-val-mean-sj">—</div>
+            <div class="kpi-benchmark">Target: ≥ 0.92</div>
+            <div class="kpi-status badge-wait" id="status-mean-sj">Pending</div>
+          </div>
+
+          <div class="kpi-card" id="kpi-min-sj">
+            <div class="kpi-label">Min Scaled Jacobian</div>
+            <div class="kpi-val" id="kpi-val-min-sj">—</div>
+            <div class="kpi-benchmark">EG2010 Gate: ≥ 0.35</div>
+            <div class="kpi-status badge-wait" id="status-min-sj">Pending</div>
+          </div>
+
+          <div class="kpi-card" id="kpi-valence4">
+            <div class="kpi-label">Regular Valence-4 Verts</div>
+            <div class="kpi-val" id="kpi-val-valence4">—</div>
+            <div class="kpi-benchmark">Structured Edge Flow</div>
+            <div class="kpi-status badge-wait" id="status-valence4">Pending</div>
+          </div>
+
+          <div class="kpi-card" id="kpi-homeometry">
+            <div class="kpi-label">Homeometry Var.</div>
+            <div class="kpi-val" id="kpi-val-homeometry">—</div>
+            <div class="kpi-benchmark">Target: ≤ 0.20</div>
+            <div class="kpi-status badge-wait" id="status-homeometry">Pending</div>
+          </div>
+
+          <div class="kpi-card" id="kpi-defeature">
+            <div class="kpi-label">Features Defeatured</div>
+            <div class="kpi-val" id="kpi-val-defeature">—</div>
+            <div class="kpi-benchmark" id="kpi-bench-defeature">Sizing Ratio used</div>
+            <div class="kpi-status badge-wait" id="status-defeature">Pending</div>
+          </div>
+
+          <div class="kpi-card" id="kpi-runtime">
+            <div class="kpi-label">Execution Time</div>
+            <div class="kpi-val" id="kpi-val-runtime">—</div>
+            <div class="kpi-benchmark">KISS Backend</div>
+            <div class="kpi-status badge-ok" id="status-engine">Ready</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Local Offline Three.js & OrbitControls -->
+  <script src="libs/three.min.js"></script>
+  <script src="libs/OrbitControls.js"></script>
+  <script src="app.js?v=3.1"></script>
+</body>
+</html>

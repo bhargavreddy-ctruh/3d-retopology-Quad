@@ -1,0 +1,11 @@
+trimesh>=4.0
+numpy
+scipy
+networkx
+pymeshlab
+libigl
+fast-simplification
+fastapi
+uvicorn
+pytest
+python-multipart

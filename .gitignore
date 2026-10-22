@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Runtime caches / generated outputs (regenerable, not source)
+backend/_runs/
+tools/render_work/
+tools/smoke_work/
+tools/smoke_work2/
+tools/smoke_work3/
+tools/alpha_test/
+tools/koala.obj
+tools/material.mtl
+*.glb
+*.obj
+
+# OS
+.DS_Store
+
+# pytest
+.pytest_cache/
+third_party/quadwild_bimdf/macos-binaries.zip
